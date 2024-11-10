@@ -1,0 +1,43 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master  # main 브랜치에 push될 때 트리거
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Build Docker image
+        run: docker build -t your-docker-repo/yourapp:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push your-docker-repo/yourapp:latest
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Deploy to AWS EC2
+        run: |
+          ssh -i your-key.pem ec2-user@your-ec2-public-ip-address "
+            docker pull your-docker-repo/yourapp:latest &&
+            docker stop yourapp || true &&
+            docker rm yourapp || true &&
+            docker run -d --name yourapp -p 8080:8080 your-docker-repo/yourapp:latest
+          "
+        env:
+          AWS_KEY: ${{ secrets.AWS_KEY }}
+          AWS_SECRET: ${{ secrets.AWS_SECRET }}
