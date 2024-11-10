@@ -59,7 +59,6 @@ public class AuthController {
             return ResponseEntity.status(403).body("Invalid refresh token");
         }
 
-
         String newAccessToken = jwtUtil.generateAccessToken(request.getUsername());
         return ResponseEntity.ok(new AuthResponse(newAccessToken, request.getRefreshToken()));
     }
