@@ -56,7 +56,7 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}  # EC2의 호스트 IP 또는 DNS
         username: ${{ secrets.EC2_USER }}  # EC2에서 사용되는 사용자명 (보통 'ec2-user' 또는 'ubuntu')
-        key: ${{ secrets.EC2_PRIVATE_KEY }}  # GitHub Secrets에 저장된 EC2의 비공개 키
+        key: ${{ secrets.EC2_SSH_KEY }}  # GitHub Secrets에 저장된 EC2의 비공개 키
         script: |
           docker pull mindBody:${{ github.sha }}  # 도커 이미지 풀링
           docker stop mindBody || true  # 기존 실행 중인 컨테이너 종료
