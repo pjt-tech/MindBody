@@ -1,0 +1,65 @@
+name: CICD
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시될 때마다 트리거
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 사용할 OS, ubuntu-latest 버전을 사용
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 11 (or your required version)
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'  # Gradle에서 사용하려는 JDK 버전
+
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Run Gradle build
+      run: ./gradlew build  # Gradle 빌드 명령어 (필요에 따라 `./gradlew build --no-daemon` 추가)
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}  # GitHub Secrets에 저장된 Docker Hub 사용자 이름
+        password: ${{ secrets.DOCKER_PASSWORD }}  # GitHub Secrets에 저장된 Docker Hub 비밀번호
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t mindBody:${{ github.sha }} .
+        docker push mindBody:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # 빌드가 끝난 후에 배포 작업이 실행됩니다.
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: SSH into EC2 and deploy
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.EC2_HOST }}  # EC2의 호스트 IP 또는 DNS
+        username: ${{ secrets.EC2_USER }}  # EC2에서 사용되는 사용자명 (보통 'ec2-user' 또는 'ubuntu')
+        key: ${{ secrets.EC2_PRIVATE_KEY }}  # GitHub Secrets에 저장된 EC2의 비공개 키
+        script: |
+          docker pull mindBody:${{ github.sha }}  # 도커 이미지 풀링
+          docker stop mindBody || true  # 기존 실행 중인 컨테이너 종료
+          docker rm mindBody || true  # 기존 컨테이너 삭제
+          docker run -d --name mindBody -p 80:80 mindBody:${{ github.sha }}  # 새로운 컨테이너 실행
+
