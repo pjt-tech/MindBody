@@ -35,8 +35,8 @@ jobs:
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}  # GitHub Secrets에 저장된 Docker Hub 사용자 이름
-        password: ${{ secrets.DOCKER_PASSWORD }}  # GitHub Secrets에 저장된 Docker Hub 비밀번호
+        username: ${{ secrets.DOCKERHUB_USERNAME }}  # GitHub Secrets에 저장된 Docker Hub 사용자 이름
+        password: ${{ secrets.DOCKERHUB_TOKEN }}  # GitHub Secrets에 저장된 Docker Hub 비밀번호
 
     - name: Build and push Docker image
       run: |
