@@ -1,0 +1,39 @@
+# application.yml
+application:
+  name: security
+
+# 공통 설정 (모든 프로파일에서 사용됨)
+spring:
+  profiles:
+    active: "${server.env:local}"
+    group:
+      local: local, common, secret
+      blue: blue, common, secret
+      green: green, common, secret
+
+server:
+  env: blue
+
+# local 프로파일에 대한 설정
+---
+spring.config.activate.on-profile: local
+server:
+  port: 8080
+  serverAddress: localhost
+  serverName: local_server
+
+# blue 프로파일에 대한 설정
+---
+spring.config.activate.on-profile: blue
+server:
+  port: 8080
+  serverAddress: 44.217.17.249
+  serverName: blue_server
+
+# green 프로파일에 대한 설정
+---
+spring.config.activate.on-profile: green
+server:
+  port: 8081
+  serverAddress: 44.217.17.249
+  serverName: green_server
